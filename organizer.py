@@ -119,14 +119,15 @@ class Organizer:
         return listings
 
     def _analyze_photo(self, photo: Photo) -> PhotoAnalysis:
-        is_product = self._is_product_photo(photo)
+        parsed_price = self._parse_price(photo.metadata.get("price"))
+        is_product = self._is_product_photo(photo, parsed_price=parsed_price)
         name = Path(photo.path).stem.replace("_", " ")
         title = str(photo.metadata.get("title") or name).strip().title()
 
         category = photo.metadata.get("category", "general")
         description = str(photo.metadata.get("description") or f"{category} photo: {title}")
 
-        price = self._parse_price(photo.metadata.get("price"))
+        price = parsed_price
 
         optional_attrs = {
             key: value
@@ -143,9 +144,10 @@ class Organizer:
             attributes=optional_attrs,
         )
 
-    def _is_product_photo(self, photo: Photo) -> bool:
+    def _is_product_photo(self, photo: Photo, parsed_price: float | None = None) -> bool:
         tag_set = {tag.lower() for tag in photo.tags}
-        has_price = self._parse_price(photo.metadata.get("price")) is not None
+        price = parsed_price if parsed_price is not None else self._parse_price(photo.metadata.get("price"))
+        has_price = price is not None
         filename = Path(photo.path).stem.lower()
         filename_tokens = {
             token for token in re.split(r"[^a-z0-9]+", filename) if token

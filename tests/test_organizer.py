@@ -155,6 +155,30 @@ class OrganizerTests(unittest.TestCase):
         analysis = organizer.analyze_photos()["s1"]
         self.assertTrue(analysis.is_product_photo)
 
+    def test_create_product_listings_uses_grouped_images(self) -> None:
+        organizer = Organizer()
+        organizer.inject_photostream(
+            [
+                Photo(
+                    id="l1",
+                    path="stream/item_alpha_01.jpg",
+                    tags=("product",),
+                    metadata={"product_id": "item-alpha", "price": "15.5", "brand": "Nadir"},
+                ),
+                Photo(
+                    id="l2",
+                    path="stream/item_alpha_02.jpg",
+                    tags=("product",),
+                    metadata={"product_id": "item-alpha", "price": "15.5", "brand": "Nadir"},
+                ),
+            ]
+        )
+        listings = organizer.create_product_listings(min_images=2, max_images=10)
+        self.assertEqual(len(listings), 1)
+        listing = listings[0]
+        self.assertEqual(listing.price, 15.5)
+        self.assertEqual(set(listing.attributes["image_ids"]), {"l1", "l2"})
+
 
 if __name__ == "__main__":
     unittest.main()
