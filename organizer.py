@@ -150,9 +150,9 @@ class Organizer:
         filename_tokens = {
             token for token in re.split(r"[^a-z0-9]+", filename) if token
         }
-        return has_price or bool(tag_set & self._product_keywords) or bool(
-            filename_tokens & self._product_keywords
-        )
+        has_keyword_tag = any(tag in self._product_keywords for tag in tag_set)
+        has_keyword_filename = any(token in self._product_keywords for token in filename_tokens)
+        return has_price or has_keyword_tag or has_keyword_filename
 
     def _group_key(self, photo: Photo) -> str:
         return str(photo.metadata.get("group") or self._product_id(photo))
