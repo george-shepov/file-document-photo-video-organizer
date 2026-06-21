@@ -30,6 +30,22 @@ class OrganizerTests(unittest.TestCase):
         self.assertEqual(analysis.price, 499.99)
         self.assertEqual(analysis.attributes["brand"], "Arcadia")
 
+    def test_zero_price_is_preserved(self) -> None:
+        organizer = Organizer()
+        organizer.inject_photostream(
+            [
+                Photo(
+                    id="p0",
+                    path="stream/free_sample.jpg",
+                    tags=("product",),
+                    metadata={"price": 0, "product_id": "free-sample"},
+                )
+            ]
+        )
+
+        analysis = organizer.analyze_photos()["p0"]
+        self.assertEqual(analysis.price, 0.0)
+
     def test_groups_multiple_images_and_keeps_common_characteristics(self) -> None:
         organizer = Organizer()
         organizer.inject_photostream(
@@ -92,6 +108,18 @@ class OrganizerTests(unittest.TestCase):
         group_sizes = {child.name: len(child.image_ids) for child in collection.children}
         self.assertEqual(group_sizes["watch-alpha"], 4)
         self.assertEqual(group_sizes["watch-beta"], 10)
+
+    def test_numeric_suffix_without_separator_is_not_trimmed(self) -> None:
+        organizer = Organizer()
+        organizer.inject_photostream(
+            [
+                Photo(id="m1", path="models/model2000.jpg", tags=("product",)),
+                Photo(id="m2", path="models/model2000_variant.jpg", tags=("product",)),
+            ]
+        )
+        groups = organizer.group_alike_photos()
+        names = {group.name for group in groups}
+        self.assertIn("model2000", names)
 
 
 if __name__ == "__main__":

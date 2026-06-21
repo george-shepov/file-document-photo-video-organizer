@@ -62,7 +62,8 @@ class Organizer:
     def create_product_groups(
         self, collection_name: str, min_images: int = 1, max_images: int = 10
     ) -> PhotoGroup:
-        product_photos = [p for p in self._photos if self._analyze_photo(p).is_product_photo]
+        analysis_by_photo_id = self.analyze_photos()
+        product_photos = [p for p in self._photos if analysis_by_photo_id[p.id].is_product_photo]
         per_product: dict[str, list[Photo]] = {}
         for photo in product_photos:
             per_product.setdefault(self._product_id(photo), []).append(photo)
@@ -88,14 +89,13 @@ class Organizer:
     def create_product_listings(
         self, min_images: int = 1, max_images: int = 10
     ) -> list[PhotoAnalysis]:
+        analysis_by_photo_id = self.analyze_photos()
         collection = self.create_product_groups(
             collection_name="products", min_images=min_images, max_images=max_images
         )
-        by_id = {photo.id: photo for photo in self._photos}
         listings: list[PhotoAnalysis] = []
         for item_group in collection.children:
-            representative = by_id[item_group.image_ids[0]]
-            analyzed = self._analyze_photo(representative)
+            analyzed = analysis_by_photo_id[item_group.image_ids[0]]
             listings.append(
                 PhotoAnalysis(
                     photo_id=analyzed.photo_id,
@@ -120,7 +120,12 @@ class Organizer:
         description = str(photo.metadata.get("description") or f"{category} photo: {title}")
 
         raw_price = photo.metadata.get("price")
-        price = float(raw_price) if isinstance(raw_price, (int, float, str)) and str(raw_price) else None
+        if isinstance(raw_price, (int, float)):
+            price = float(raw_price)
+        elif isinstance(raw_price, str) and raw_price.strip() != "":
+            price = float(raw_price)
+        else:
+            price = None
 
         optional_attrs = {
             key: value
@@ -151,7 +156,7 @@ class Organizer:
         if photo.metadata.get("product_id"):
             return str(photo.metadata["product_id"])
         stem = Path(photo.path).stem.lower()
-        return re.sub(r"([_-]?\d+)$", "", stem)
+        return re.sub(r"([_-]\d+)$", "", stem)
 
     def _common_attributes(self, photos: list[Photo]) -> dict[str, Any]:
         if not photos:
