@@ -33,6 +33,8 @@ class PhotoGroup:
 
 
 class Organizer:
+    PRODUCT_KEYWORDS = {"product", "catalog", "listing", "watch"}
+
     def __init__(self) -> None:
         self._photos: list[Photo] = []
 
@@ -150,9 +152,10 @@ class Organizer:
         has_price = raw_price is not None and (
             not isinstance(raw_price, str) or raw_price.strip() != ""
         )
-        product_words = {"product", "catalog", "listing", "watch"}
         filename = Path(photo.path).stem.lower()
-        return has_price or bool(tag_set & product_words) or any(word in filename for word in product_words)
+        return has_price or bool(tag_set & self.PRODUCT_KEYWORDS) or any(
+            word in filename for word in self.PRODUCT_KEYWORDS
+        )
 
     def _group_key(self, photo: Photo) -> str:
         return str(photo.metadata.get("group") or self._product_id(photo))
@@ -161,6 +164,7 @@ class Organizer:
         if photo.metadata.get("product_id"):
             return str(photo.metadata["product_id"])
         stem = Path(photo.path).stem.lower()
+        # Trim sequence suffixes like "_01" or "-2", but keep embedded numbers (e.g. "model2000").
         return re.sub(r"([_-]\d+)$", "", stem)
 
     def _common_attributes(self, photos: list[Photo]) -> dict[str, Any]:

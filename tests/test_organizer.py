@@ -119,8 +119,9 @@ class OrganizerTests(unittest.TestCase):
             ]
         )
         groups = organizer.group_alike_photos()
-        names = {group.name for group in groups}
-        self.assertIn("model2000", names)
+        names_to_ids = {group.name: set(group.image_ids) for group in groups}
+        self.assertEqual(names_to_ids["model2000"], {"m1"})
+        self.assertEqual(names_to_ids["model2000_variant"], {"m2"})
 
 
 if __name__ == "__main__":
