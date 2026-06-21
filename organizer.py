@@ -33,7 +33,7 @@ class PhotoGroup:
 
 
 class Organizer:
-    DEFAULT_PRODUCT_KEYWORDS = {"product", "catalog", "listing", "item", "watch"}
+    DEFAULT_PRODUCT_KEYWORDS = {"product", "catalog", "listing", "item"}
 
     def __init__(self, product_keywords: set[str] | None = None) -> None:
         self._photos: list[Photo] = []
@@ -130,7 +130,10 @@ class Organizer:
         if isinstance(raw_price, (int, float)):
             price = float(raw_price)
         elif isinstance(raw_price, str) and raw_price.strip() != "":
-            price = float(raw_price)
+            try:
+                price = float(raw_price)
+            except ValueError:
+                price = None
         else:
             price = None
 
@@ -170,8 +173,8 @@ class Organizer:
         if photo.metadata.get("product_id"):
             return str(photo.metadata["product_id"])
         stem = Path(photo.path).stem.lower()
-        # Trim sequence suffixes like "_01" or "-12", but keep embedded numbers (e.g. "model2000").
-        return re.sub(r"[_-]\d{2,}$", "", stem)
+        # Trim sequence suffixes like "_1" or "-12", but keep embedded numbers (e.g. "model2000").
+        return re.sub(r"[_-]\d+$", "", stem)
 
     def _common_attributes(self, photos: list[Photo]) -> dict[str, Any]:
         if not photos:

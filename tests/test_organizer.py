@@ -47,6 +47,21 @@ class OrganizerTests(unittest.TestCase):
         self.assertEqual(analysis.price, 0.0)
         self.assertTrue(analysis.is_product_photo)
 
+    def test_invalid_price_string_falls_back_to_none(self) -> None:
+        organizer = Organizer()
+        organizer.inject_photostream(
+            [
+                Photo(
+                    id="p-bad",
+                    path="stream/item_bad_price.jpg",
+                    tags=("product",),
+                    metadata={"price": "not-a-number"},
+                )
+            ]
+        )
+        analysis = organizer.analyze_photos()["p-bad"]
+        self.assertIsNone(analysis.price)
+
     def test_groups_multiple_images_and_keeps_common_characteristics(self) -> None:
         organizer = Organizer()
         organizer.inject_photostream(
@@ -87,7 +102,7 @@ class OrganizerTests(unittest.TestCase):
                 Photo(
                     id=f"a{i}",
                     path=f"collection/watch_alpha_{i:02d}.jpg",
-                    tags=("watch",),
+                    tags=("product", "watch"),
                     metadata={"product_id": "watch-alpha", "collection": "watches"},
                 )
             )
@@ -96,7 +111,7 @@ class OrganizerTests(unittest.TestCase):
                 Photo(
                     id=f"b{i}",
                     path=f"collection/watch_beta_{i:02d}.jpg",
-                    tags=("watch",),
+                    tags=("product", "watch"),
                     metadata={"product_id": "watch-beta", "collection": "watches"},
                 )
             )
