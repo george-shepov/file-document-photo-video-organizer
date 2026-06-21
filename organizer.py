@@ -95,6 +95,8 @@ class Organizer:
         )
         listings: list[PhotoAnalysis] = []
         for item_group in collection.children:
+            if not item_group.image_ids:
+                continue
             analyzed = analysis_by_photo_id[item_group.image_ids[0]]
             listings.append(
                 PhotoAnalysis(
@@ -144,7 +146,10 @@ class Organizer:
 
     def _is_product_photo(self, photo: Photo) -> bool:
         tag_set = {tag.lower() for tag in photo.tags}
-        has_price = "price" in photo.metadata and str(photo.metadata.get("price", "")).strip() != ""
+        raw_price = photo.metadata.get("price")
+        has_price = raw_price is not None and (
+            not isinstance(raw_price, str) or raw_price.strip() != ""
+        )
         product_words = {"product", "catalog", "listing", "watch"}
         filename = Path(photo.path).stem.lower()
         return has_price or bool(tag_set & product_words) or any(word in filename for word in product_words)
@@ -161,11 +166,12 @@ class Organizer:
     def _common_attributes(self, photos: list[Photo]) -> dict[str, Any]:
         if not photos:
             return {}
-        common = dict(photos[0].metadata)
+        common = dict(photos[0].metadata or {})
         for photo in photos[1:]:
+            metadata = photo.metadata or {}
             common = {
                 key: value
                 for key, value in common.items()
-                if key in photo.metadata and photo.metadata[key] == value
+                if key in metadata and metadata[key] == value
             }
         return common

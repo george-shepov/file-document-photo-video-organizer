@@ -45,6 +45,7 @@ class OrganizerTests(unittest.TestCase):
 
         analysis = organizer.analyze_photos()["p0"]
         self.assertEqual(analysis.price, 0.0)
+        self.assertTrue(analysis.is_product_photo)
 
     def test_groups_multiple_images_and_keeps_common_characteristics(self) -> None:
         organizer = Organizer()
