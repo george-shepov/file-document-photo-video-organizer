@@ -33,10 +33,13 @@ class PhotoGroup:
 
 
 class Organizer:
-    PRODUCT_KEYWORDS = {"product", "catalog", "listing", "watch"}
+    DEFAULT_PRODUCT_KEYWORDS = {"product", "catalog", "listing", "item", "watch"}
 
-    def __init__(self) -> None:
+    def __init__(self, product_keywords: set[str] | None = None) -> None:
         self._photos: list[Photo] = []
+        self._product_keywords = {
+            keyword.lower() for keyword in (product_keywords or self.DEFAULT_PRODUCT_KEYWORDS)
+        }
 
     def inject_photostream(self, photos: list[Photo]) -> None:
         self._photos.extend(photos)
@@ -153,8 +156,11 @@ class Organizer:
             not isinstance(raw_price, str) or raw_price.strip() != ""
         )
         filename = Path(photo.path).stem.lower()
-        return has_price or bool(tag_set & self.PRODUCT_KEYWORDS) or any(
-            word in filename for word in self.PRODUCT_KEYWORDS
+        filename_tokens = {
+            token for token in re.split(r"[^a-z0-9]+", filename) if token
+        }
+        return has_price or bool(tag_set & self._product_keywords) or bool(
+            filename_tokens & self._product_keywords
         )
 
     def _group_key(self, photo: Photo) -> str:
@@ -164,8 +170,8 @@ class Organizer:
         if photo.metadata.get("product_id"):
             return str(photo.metadata["product_id"])
         stem = Path(photo.path).stem.lower()
-        # Trim sequence suffixes like "_01" or "-2", but keep embedded numbers (e.g. "model2000").
-        return re.sub(r"([_-]\d+)$", "", stem)
+        # Trim sequence suffixes like "_01" or "-12", but keep embedded numbers (e.g. "model2000").
+        return re.sub(r"[_-]\d{2,}$", "", stem)
 
     def _common_attributes(self, photos: list[Photo]) -> dict[str, Any]:
         if not photos:

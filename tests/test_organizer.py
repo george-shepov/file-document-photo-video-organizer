@@ -123,6 +123,14 @@ class OrganizerTests(unittest.TestCase):
         self.assertEqual(names_to_ids["model2000"], {"m1"})
         self.assertEqual(names_to_ids["model2000_variant"], {"m2"})
 
+    def test_custom_product_keywords_are_supported(self) -> None:
+        organizer = Organizer(product_keywords={"shoe"})
+        organizer.inject_photostream(
+            [Photo(id="s1", path="stream/shoe_01.jpg", tags=(), metadata={"product_id": "shoe-01"})]
+        )
+        analysis = organizer.analyze_photos()["s1"]
+        self.assertTrue(analysis.is_product_photo)
+
 
 if __name__ == "__main__":
     unittest.main()
