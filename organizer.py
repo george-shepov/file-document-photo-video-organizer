@@ -126,16 +126,7 @@ class Organizer:
         category = photo.metadata.get("category", "general")
         description = str(photo.metadata.get("description") or f"{category} photo: {title}")
 
-        raw_price = photo.metadata.get("price")
-        if isinstance(raw_price, (int, float)):
-            price = float(raw_price)
-        elif isinstance(raw_price, str) and raw_price.strip() != "":
-            try:
-                price = float(raw_price)
-            except ValueError:
-                price = None
-        else:
-            price = None
+        price = self._parse_price(photo.metadata.get("price"))
 
         optional_attrs = {
             key: value
@@ -154,10 +145,7 @@ class Organizer:
 
     def _is_product_photo(self, photo: Photo) -> bool:
         tag_set = {tag.lower() for tag in photo.tags}
-        raw_price = photo.metadata.get("price")
-        has_price = raw_price is not None and (
-            not isinstance(raw_price, str) or raw_price.strip() != ""
-        )
+        has_price = self._parse_price(photo.metadata.get("price")) is not None
         filename = Path(photo.path).stem.lower()
         filename_tokens = {
             token for token in re.split(r"[^a-z0-9]+", filename) if token
@@ -188,3 +176,13 @@ class Organizer:
                 if key in metadata and metadata[key] == value
             }
         return common
+
+    def _parse_price(self, raw_price: Any) -> float | None:
+        if isinstance(raw_price, (int, float)):
+            return float(raw_price)
+        if isinstance(raw_price, str) and raw_price.strip() != "":
+            try:
+                return float(raw_price)
+            except ValueError:
+                return None
+        return None

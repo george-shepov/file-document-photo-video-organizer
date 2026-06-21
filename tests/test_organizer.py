@@ -47,6 +47,15 @@ class OrganizerTests(unittest.TestCase):
         self.assertEqual(analysis.price, 0.0)
         self.assertTrue(analysis.is_product_photo)
 
+    def test_float_zero_price_is_preserved(self) -> None:
+        organizer = Organizer()
+        organizer.inject_photostream(
+            [Photo(id="p0f", path="stream/free_float.jpg", metadata={"price": 0.0})]
+        )
+        analysis = organizer.analyze_photos()["p0f"]
+        self.assertEqual(analysis.price, 0.0)
+        self.assertTrue(analysis.is_product_photo)
+
     def test_invalid_price_string_falls_back_to_none(self) -> None:
         organizer = Organizer()
         organizer.inject_photostream(
